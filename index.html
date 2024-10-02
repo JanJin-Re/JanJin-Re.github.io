@@ -143,11 +143,10 @@
         #cancelBtn:hover {
             background-color: #b71c1c;
         }
-        .price-header {
-            display: flex;
-            flex-direction: column;
-        }
     </style>
+    <!-- เพิ่ม Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js"></script>
 </head>
 <body>
 
@@ -162,58 +161,12 @@
         <tr>
             <th>ห้อง</th>
             <th>สถานะ</th>
-            <th>
-                <div class="price-header">
-                    ราคา
-                    <span>(บาท/คืน)</span>
-                </div>
-            </th>
+            <th>ราคา (บาท/คืน)</th>
             <th class="admin-only">อัพเดทสถานะ</th>
         </tr>
     </thead>
     <tbody id="room-status">
-        <tr>
-            <td>1</td>
-            <td class="status available">ว่าง</td>
-            <td>500</td>
-            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
-        </tr>
-        <tr>
-            <td>2</td>
-            <td class="status available">ว่าง</td>
-            <td>500</td>
-            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
-        </tr>
-        <tr>
-            <td>3</td>
-            <td class="status available">ว่าง</td>
-            <td>500</td>
-            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
-        </tr>
-        <tr>
-            <td>4</td>
-            <td class="status available">ว่าง</td>
-            <td>500</td>
-            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
-        </tr>
-        <tr>
-            <td>5</td>
-            <td class="status available">ว่าง</td>
-            <td>450</td>
-            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
-        </tr>
-        <tr>
-            <td>6</td>
-            <td class="status available">ว่าง</td>
-            <td>600</td>
-            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
-        </tr>
-        <tr>
-            <td>7</td>
-            <td class="status available">ว่าง</td>
-            <td>600</td>
-            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
-        </tr>
+        <!-- ข้อมูลห้องพัก -->
     </tbody>
 </table>
 
@@ -229,9 +182,59 @@
 </div>
 
 <script>
+    // กำหนดค่า Firebase
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    // เริ่ม Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
     const correctEmail = "admin@example.com";
     const correctPassword = "password123";
     let isAdmin = false;
+
+    // ฟังก์ชันสำหรับโหลดสถานะห้องจาก Firebase
+    function loadRoomStatus() {
+        const roomStatusRef = database.ref('roomStatus');
+        roomStatusRef.on('value', (snapshot) => {
+            const roomData = snapshot.val();
+            if (roomData) {
+                const roomStatusTable = document.getElementById("room-status");
+                roomStatusTable.innerHTML = ""; // เคลียร์ตารางก่อน
+                Object.keys(roomData).forEach((key) => {
+                    const room = roomData[key];
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${key}</td>
+                        <td class="status ${room.status === 'ว่าง' ? 'available' : 'unavailable'}">${room.status}</td>
+                        <td>${room.price}</td>
+                        <td class="admin-only"><button onclick="updateStatus('${key}')">อัพเดท</button></td>
+                    `;
+                    roomStatusTable.appendChild(row);
+                });
+            }
+        });
+    }
+
+    // ฟังก์ชันสำหรับอัพเดทสถานะห้อง
+    function updateStatus(roomNumber) {
+        const row = document.querySelector(`tr:has(td:contains(${roomNumber}))`);
+        const statusCell = row.querySelector('.status');
+        const newStatus = statusCell.classList.contains('available') ? 'ไม่ว่าง' : 'ว่าง';
+
+        // อัพเดทสถานะใน Firebase
+        database.ref(`roomStatus/${roomNumber}`).update({
+            status: newStatus
+        });
+    }
 
     // ฟังก์ชันเปิด modal ล็อกอิน
     function openLoginModal() {
@@ -255,7 +258,6 @@
             document.body.classList.add("show-admin");
             document.getElementById("adminToggleBtn").textContent = "ออกจากโหมดผู้ดูแล";
             closeLoginModal();
-            loadRoomStatus(); // โหลดสถานะห้อง
         } else {
             alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
         }
@@ -264,7 +266,6 @@
     // ฟังก์ชันเปิด/ปิดโหมดผู้ดูแล
     function toggleAdminMode() {
         if (isAdmin) {
-            saveRoomStatus(); // บันทึกสถานะห้องก่อนออกจากโหมดผู้ดูแล
             isAdmin = false;
             document.body.classList.remove("show-admin");
             document.getElementById("adminToggleBtn").textContent = "เข้าสู่โหมดผู้ดูแล";
@@ -273,50 +274,7 @@
         }
     }
 
-    // ฟังก์ชันสำหรับอัพเดทสถานะห้อง
-    function updateStatus(button) {
-        const row = button.closest('tr');
-        const statusCell = row.querySelector('.status');
-        if (statusCell.classList.contains('available')) {
-            statusCell.textContent = 'ไม่ว่าง';
-            statusCell.classList.remove('available');
-            statusCell.classList.add('unavailable');
-        } else {
-            statusCell.textContent = 'ว่าง';
-            statusCell.classList.remove('unavailable');
-            statusCell.classList.add('available');
-        }
-        saveRoomStatus(); // บันทึกสถานะหลังการอัพเดท
-    }
-
-    // ฟังก์ชันบันทึกสถานะห้อง
-    function saveRoomStatus() {
-        const roomData = [];
-        const rows = document.querySelectorAll("#room-status tr");
-        rows.forEach(row => {
-            const roomNumber = row.querySelector('td:first-child').textContent;
-            const status = row.querySelector('.status').textContent;
-            const price = row.querySelector('td:nth-child(3)').textContent;
-            roomData.push({ roomNumber, status, price });
-        });
-        localStorage.setItem('roomStatus', JSON.stringify(roomData));
-    }
-
-    // ฟังก์ชันโหลดสถานะห้อง
-    function loadRoomStatus() {
-        const roomData = JSON.parse(localStorage.getItem('roomStatus'));
-        if (roomData) {
-            roomData.forEach((room, index) => {
-                const row = document.querySelectorAll("#room-status tr")[index];
-                const statusCell = row.querySelector('.status');
-                statusCell.textContent = room.status;
-                statusCell.className = `status ${room.status === 'ว่าง' ? 'available' : 'unavailable'}`;
-                row.querySelector('td:nth-child(3)').textContent = room.price; // กำหนดราคาให้ถูกต้อง
-            });
-        }
-    }
-
-    // โหลดสถานะห้องเมื่อหน้าเว็บถูกโหลด
+    // เรียกฟังก์ชันโหลดสถานะห้องเมื่อหน้าเว็บถูกโหลด
     window.onload = loadRoomStatus;
 </script>
 
