@@ -254,15 +254,17 @@
             isAdmin = true;
             document.body.classList.add("show-admin");
             document.getElementById("adminToggleBtn").textContent = "ออกจากโหมดผู้ดูแล";
+            loadRoomStatus(); // โหลดสถานะห้องเมื่อเข้าสู่โหมดผู้ดูแล
             closeLoginModal();
         } else {
-            alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+            openLoginModal();
         }
     }
 
     // ฟังก์ชันเปิด/ปิดโหมดผู้ดูแล
     function toggleAdminMode() {
         if (isAdmin) {
+            saveRoomStatus(); // บันทึกสถานะห้องก่อนออกจากโหมดผู้ดูแล
             isAdmin = false;
             document.body.classList.remove("show-admin");
             document.getElementById("adminToggleBtn").textContent = "เข้าสู่โหมดผู้ดูแล";
@@ -271,7 +273,7 @@
         }
     }
 
-    // ฟังก์ชันสำหรับอัพเดทสถานะห้อง (ตัวอย่างการทำงาน)
+    // ฟังก์ชันสำหรับอัพเดทสถานะห้อง
     function updateStatus(button) {
         const row = button.closest('tr');
         const statusCell = row.querySelector('.status');
@@ -283,6 +285,32 @@
             statusCell.textContent = 'ว่าง';
             statusCell.classList.remove('unavailable');
             statusCell.classList.add('available');
+        }
+    }
+
+    // ฟังก์ชันบันทึกสถานะห้อง
+    function saveRoomStatus() {
+        const roomData = [];
+        const rows = document.querySelectorAll("#room-status tr");
+        rows.forEach(row => {
+            const roomNumber = row.querySelector('td:first-child').textContent;
+            const status = row.querySelector('.status').textContent;
+            const price = row.querySelector('td:nth-child(3)').textContent;
+            roomData.push({ roomNumber, status, price });
+        });
+        localStorage.setItem('roomStatus', JSON.stringify(roomData));
+    }
+
+    // ฟังก์ชันโหลดสถานะห้อง
+    function loadRoomStatus() {
+        const roomData = JSON.parse(localStorage.getItem('roomStatus'));
+        if (roomData) {
+            roomData.forEach((room, index) => {
+                const row = document.querySelectorAll("#room-status tr")[index];
+                const statusCell = row.querySelector('.status');
+                statusCell.textContent = room.status;
+                statusCell.className = `status ${room.status === 'ว่าง' ? 'available' : 'unavailable'}`;
+            });
         }
     }
 </script>
