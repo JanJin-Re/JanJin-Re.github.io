@@ -310,9 +310,13 @@
                 const statusCell = row.querySelector('.status');
                 statusCell.textContent = room.status;
                 statusCell.className = `status ${room.status === 'ว่าง' ? 'available' : 'unavailable'}`;
+                row.querySelector('td:nth-child(3)').textContent = room.price; // กำหนดราคาให้ถูกต้อง
             });
         }
     }
+
+    // โหลดสถานะห้องเมื่อหน้าเว็บถูกโหลด
+    window.onload = loadRoomStatus;
 </script>
 
 </body>
