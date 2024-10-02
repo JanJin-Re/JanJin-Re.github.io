@@ -4,18 +4,159 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>สถานะห้องพักและราคา</title>
-    <script src="https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js"></script>
     <style>
-        /* สไตล์ที่เหมือนเดิม */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #F5DEB3;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        table {
+            width: auto;
+            border-collapse: collapse;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: white;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            text-align: center;
+            vertical-align: middle;
+            padding: 10px;
+        }
+        th {
+            background-color: #8B4513;
+            color: white;
+            font-size: 18px;
+        }
+        td {
+            font-size: 16px;
+        }
+        th:nth-child(1), td:nth-child(1) {
+            width: 50px;
+        }
+        th:nth-child(2), td:nth-child(2) {
+            width: 100px;
+        }
+        th:nth-child(3), td:nth-child(3) {
+            width: 100px;
+        }
+        .available {
+            background-color: #c8e6c9;
+            color: #2e7d32;
+        }
+        .unavailable {
+            background-color: #ffccbc;
+            color: #d84315;
+        }
+        button {
+            padding: 8px 12px;
+            font-size: 16px;
+            color: white;
+            background-color: #8B4513;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #A0522D;
+        }
+        .admin-only {
+            display: none;
+        }
+        .show-admin .admin-only {
+            display: table-cell;
+        }
+        .toggle-btn {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #8B4513;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 20px;
+        }
+        .toggle-btn:hover {
+            background-color: #A0522D;
+        }
+        #loginModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        #loginModal.show {
+            display: flex;
+        }
+        #loginForm {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #loginForm input {
+            margin: 10px 0;
+            padding: 10px;
+            width: 90%;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        #loginForm button {
+            width: 100%;
+            padding: 10px;
+            background-color: #8B4513;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #loginForm button:hover {
+            background-color: #A0522D;
+        }
+        #cancelBtn {
+            margin-top: 10px;
+            background-color: #d32f2f;
+        }
+        #cancelBtn:hover {
+            background-color: #b71c1c;
+        }
+        .price-header {
+            display: flex;
+            flex-direction: column;
+        }
     </style>
 </head>
 <body>
 
 <h1>สถานะห้องพักและราคา</h1>
 
+<!-- ปุ่มสำหรับเปิด/ปิดโหมดผู้ดูแล -->
 <button id="adminToggleBtn" class="toggle-btn" onclick="toggleAdminMode()">เข้าสู่โหมดผู้ดูแล</button>
 
+<!-- ตารางแสดงสถานะห้องและราคา -->
 <table>
     <thead>
         <tr>
@@ -31,10 +172,52 @@
         </tr>
     </thead>
     <tbody id="room-status">
-        <!-- เพิ่มห้องพักต่างๆ ที่นี่ -->
+        <tr>
+            <td>1</td>
+            <td class="status available">ว่าง</td>
+            <td>500</td>
+            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td class="status available">ว่าง</td>
+            <td>500</td>
+            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td class="status available">ว่าง</td>
+            <td>500</td>
+            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td class="status available">ว่าง</td>
+            <td>500</td>
+            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td class="status available">ว่าง</td>
+            <td>450</td>
+            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td class="status available">ว่าง</td>
+            <td>600</td>
+            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
+        </tr>
+        <tr>
+            <td>7</td>
+            <td class="status available">ว่าง</td>
+            <td>600</td>
+            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
+        </tr>
     </tbody>
 </table>
 
+<!-- Modal สำหรับล็อกอิน -->
 <div id="loginModal">
     <div id="loginForm">
         <h2>เข้าสู่ระบบผู้ดูแล</h2>
@@ -46,37 +229,42 @@
 </div>
 
 <script>
-    // การตั้งค่า Firebase
-    const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_AUTH_DOMAIN",
-        databaseURL: "YOUR_DATABASE_URL",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_STORAGE_BUCKET",
-        messagingSenderId: "YOUR_SENDER_ID",
-        appId: "YOUR_APP_ID"
-    };
-
-    // เริ่มต้น Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-
+    const correctEmail = "admin@example.com";
+    const correctPassword = "password123";
     let isAdmin = false;
 
+    // ฟังก์ชันเปิด modal ล็อกอิน
     function openLoginModal() {
-        // ฟังก์ชันเปิด modal ล็อกอิน
+        document.getElementById("loginModal").classList.add("show");
+        document.getElementById("email").value = '';
+        document.getElementById("password").value = '';
     }
 
+    // ฟังก์ชันปิด modal ล็อกอิน
     function closeLoginModal() {
-        // ฟังก์ชันปิด modal ล็อกอิน
+        document.getElementById("loginModal").classList.remove("show");
     }
 
+    // ฟังก์ชันล็อกอิน
     function login() {
-        // ฟังก์ชันล็อกอิน
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        if (email === correctEmail && password === correctPassword) {
+            isAdmin = true;
+            document.body.classList.add("show-admin");
+            document.getElementById("adminToggleBtn").textContent = "ออกจากโหมดผู้ดูแล";
+            closeLoginModal();
+            loadRoomStatus(); // โหลดสถานะห้อง
+        } else {
+            alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+        }
     }
 
+    // ฟังก์ชันเปิด/ปิดโหมดผู้ดูแล
     function toggleAdminMode() {
         if (isAdmin) {
+            saveRoomStatus(); // บันทึกสถานะห้องก่อนออกจากโหมดผู้ดูแล
             isAdmin = false;
             document.body.classList.remove("show-admin");
             document.getElementById("adminToggleBtn").textContent = "เข้าสู่โหมดผู้ดูแล";
@@ -85,48 +273,51 @@
         }
     }
 
+    // ฟังก์ชันสำหรับอัพเดทสถานะห้อง
     function updateStatus(button) {
         const row = button.closest('tr');
         const statusCell = row.querySelector('.status');
-        const roomNumber = row.querySelector('td:first-child').textContent;
+        if (statusCell.classList.contains('available')) {
+            statusCell.textContent = 'ไม่ว่าง';
+            statusCell.classList.remove('available');
+            statusCell.classList.add('unavailable');
+        } else {
+            statusCell.textContent = 'ว่าง';
+            statusCell.classList.remove('unavailable');
+            statusCell.classList.add('available');
+        }
+        saveRoomStatus(); // บันทึกสถานะหลังการอัพเดท
+    }
 
-        const newStatus = statusCell.classList.contains('available') ? 'unavailable' : 'available';
-        const newPrice = newStatus === 'available' ? 500 : 0; // เปลี่ยนแปลงราคาตามสถานะ
-
-        statusCell.textContent = newStatus === 'available' ? 'ว่าง' : 'ไม่ว่าง';
-        statusCell.classList.toggle('available', newStatus === 'available');
-        statusCell.classList.toggle('unavailable', newStatus === 'unavailable');
-
-        // อัปเดตสถานะใน Firebase
-        const roomData = { status: newStatus === 'available' ? 'ว่าง' : 'ไม่ว่าง', price: newPrice };
-        database.ref('rooms/' + roomNumber).set(roomData);
+    // ฟังก์ชันบันทึกสถานะห้อง
+    function saveRoomStatus() {
+        const roomData = [];
+        const rows = document.querySelectorAll("#room-status tr");
+        rows.forEach(row => {
+            const roomNumber = row.querySelector('td:first-child').textContent;
+            const status = row.querySelector('.status').textContent;
+            const price = row.querySelector('td:nth-child(3)').textContent;
+            roomData.push({ roomNumber, status, price });
+        });
+        localStorage.setItem('roomStatus', JSON.stringify(roomData));
     }
 
     // ฟังก์ชันโหลดสถานะห้อง
     function loadRoomStatus() {
-        const roomsRef = database.ref('rooms');
-        roomsRef.on('value', (snapshot) => {
-            const roomData = snapshot.val();
-            const roomStatusTable = document.getElementById('room-status');
-            roomStatusTable.innerHTML = ''; // เคลียร์ตารางก่อน
-            for (const room in roomData) {
-                const { status, price } = roomData[room];
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${room}</td>
-                    <td class="status ${status === 'ว่าง' ? 'available' : 'unavailable'}">${status}</td>
-                    <td>${price}</td>
-                    <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
-                `;
-                roomStatusTable.appendChild(row);
-            }
-        });
+        const roomData = JSON.parse(localStorage.getItem('roomStatus'));
+        if (roomData) {
+            roomData.forEach((room, index) => {
+                const row = document.querySelectorAll("#room-status tr")[index];
+                const statusCell = row.querySelector('.status');
+                statusCell.textContent = room.status;
+                statusCell.className = `status ${room.status === 'ว่าง' ? 'available' : 'unavailable'}`;
+                row.querySelector('td:nth-child(3)').textContent = room.price; // กำหนดราคาให้ถูกต้อง
+            });
+        }
     }
 
     // โหลดสถานะห้องเมื่อหน้าเว็บถูกโหลด
-    window.onload = () => {
-        loadRoomStatus();
-    };
+    window.onload = loadRoomStatus;
 </script>
 
 </body>
