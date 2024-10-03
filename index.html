@@ -6,71 +6,22 @@
     <title>สถานะห้องพักและราคา</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #F5DEB3;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            flex-direction: column;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
+            font-family: Arial, sans-serif;
         }
         table {
-            width: auto;
+            width: 100%;
             border-collapse: collapse;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            background-color: white;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
         }
         th, td {
-            text-align: center;
-            vertical-align: middle;
-            padding: 10px;
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
         }
         th {
-            background-color: #8B4513;
-            color: white;
-            font-size: 18px;
+            background-color: #f2f2f2;
         }
-        td {
-            font-size: 16px;
-        }
-        th:nth-child(1), td:nth-child(1) {
-            width: 50px;
-        }
-        th:nth-child(2), td:nth-child(2) {
-            width: 100px;
-        }
-        th:nth-child(3), td:nth-child(3) {
-            width: 100px;
-        }
-        .available {
-            background-color: #c8e6c9;
-            color: #2e7d32;
-        }
-        .unavailable {
-            background-color: #ffccbc;
-            color: #d84315;
-        }
-        button {
-            padding: 8px 12px;
-            font-size: 16px;
-            color: white;
-            background-color: #8B4513;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #A0522D;
+        .toggle-btn {
+            margin-bottom: 20px;
         }
         .admin-only {
             display: none;
@@ -78,85 +29,116 @@
         .show-admin .admin-only {
             display: table-cell;
         }
-        .toggle-btn {
-            padding: 10px 20px;
-            font-size: 18px;
-            background-color: #8B4513;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            margin-bottom: 20px;
-        }
-        .toggle-btn:hover {
-            background-color: #A0522D;
-        }
         #loginModal {
             display: none;
             position: fixed;
-            top: 0;
             left: 0;
+            top: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.5);
             justify-content: center;
             align-items: center;
-        }
-        #loginModal.show {
-            display: flex;
         }
         #loginForm {
             background-color: white;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 300px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        #loginForm input {
-            margin: 10px 0;
-            padding: 10px;
-            width: 90%;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-        #loginForm button {
-            width: 100%;
-            padding: 10px;
-            background-color: #8B4513;
-            color: white;
-            border: none;
             border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
+            text-align: center;
         }
-        #loginForm button:hover {
-            background-color: #A0522D;
-        }
-        #cancelBtn {
-            margin-top: 10px;
-            background-color: #d32f2f;
-        }
-        #cancelBtn:hover {
-            background-color: #b71c1c;
+        #loginModal.show {
+            display: flex;
         }
     </style>
-
-    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
     <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-database.js"></script>
+    <script>
+        // กำหนดค่าการเชื่อมต่อ Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyB9huDa17wQnpKFhYP8iGC35ivwlP-m_oU",
+            authDomain: "example-7a9ac.firebaseapp.com",
+            databaseURL: "https://example-7a9ac-default-rtdb.firebaseio.com",
+            projectId: "example-7a9ac",
+            storageBucket: "example-7a9ac.appspot.com",
+            messagingSenderId: "470545773345",
+            appId: "1:470545773345:web:9431f3d1192815dc1ec460"
+        };
+        
+        // เริ่มต้น Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const correctEmail = "admin@example.com";
+        const correctPassword = "password123";
+        let isAdmin = false;
+
+        function openLoginModal() {
+            document.getElementById("loginModal").classList.add("show");
+        }
+
+        function closeLoginModal() {
+            document.getElementById("loginModal").classList.remove("show");
+        }
+
+        function login() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            if (email === correctEmail && password === correctPassword) {
+                isAdmin = true;
+                closeLoginModal();
+                document.getElementById("adminToggleBtn").textContent = "ออกจากโหมดผู้ดูแล";
+                document.querySelector("table").classList.add("show-admin");
+            } else {
+                alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+            }
+        }
+
+        function toggleAdminMode() {
+            if (isAdmin) {
+                isAdmin = false;
+                document.getElementById("adminToggleBtn").textContent = "เข้าสู่โหมดผู้ดูแล";
+                document.querySelector("table").classList.remove("show-admin");
+            } else {
+                openLoginModal();
+            }
+        }
+
+        function updateStatus(button) {
+            const row = button.closest("tr");
+            const statusCell = row.querySelector(".status");
+            const currentStatus = statusCell.textContent;
+
+            const newStatus = currentStatus === "ว่าง" ? "ไม่ว่าง" : "ว่าง";
+            statusCell.textContent = newStatus;
+            statusCell.className = "status " + (newStatus === "ว่าง" ? "available" : "unavailable");
+        }
+
+        function saveRoomStatus() {
+            const roomData = [];
+            const rows = document.querySelectorAll("#room-status tr");
+            rows.forEach(row => {
+                const roomNumber = row.querySelector('td:first-child').textContent;
+                const status = row.querySelector('.status').textContent;
+                const price = row.querySelector('td:nth-child(3)').textContent;
+                roomData.push({ roomNumber, status, price });
+            });
+
+            // บันทึกข้อมูลลง Firebase
+            roomData.forEach(room => {
+                firebase.database().ref('rooms/' + room.roomNumber).set({
+                    status: room.status,
+                    price: room.price
+                });
+            });
+        }
+    </script>
 </head>
 <body>
 
 <h1>สถานะห้องพักและราคา</h1>
-
-<!-- ปุ่มสำหรับเปิด/ปิดโหมดผู้ดูแล -->
 <button id="adminToggleBtn" class="toggle-btn" onclick="toggleAdminMode()">เข้าสู่โหมดผู้ดูแล</button>
 
-<!-- ตารางแสดงสถานะห้องและราคา -->
 <table>
     <thead>
         <tr>
@@ -175,44 +157,14 @@
         </tr>
         <tr>
             <td>2</td>
-            <td class="status available">ว่าง</td>
-            <td>500</td>
-            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
-        </tr>
-        <tr>
-            <td>3</td>
-            <td class="status available">ว่าง</td>
-            <td>500</td>
-            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
-        </tr>
-        <tr>
-            <td>4</td>
-            <td class="status available">ว่าง</td>
-            <td>500</td>
-            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
-        </tr>
-        <tr>
-            <td>5</td>
-            <td class="status available">ว่าง</td>
-            <td>450</td>
-            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
-        </tr>
-        <tr>
-            <td>6</td>
-            <td class="status available">ว่าง</td>
+            <td class="status unavailable">ไม่ว่าง</td>
             <td>600</td>
             <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
         </tr>
-        <tr>
-            <td>7</td>
-            <td class="status available">ว่าง</td>
-            <td>600</td>
-            <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
-        </tr>
+        <!-- เพิ่มห้องเพิ่มเติมตามต้องการ -->
     </tbody>
 </table>
 
-<!-- Modal สำหรับล็อกอิน -->
 <div id="loginModal">
     <div id="loginForm">
         <h2>เข้าสู่ระบบผู้ดูแล</h2>
@@ -222,111 +174,6 @@
         <button id="cancelBtn" onclick="closeLoginModal()">ยกเลิก</button>
     </div>
 </div>
-
-<script>
-    // Firebase configuration
-    const firebaseConfig = {
-        apiKey: "AIzaSyB9huDa17wQnpKFhYP8iGC35ivwlP-m_oU",
-        authDomain: "example-7a9ac.firebaseapp.com",
-        databaseURL: "https://example-7a9ac-default-rtdb.firebaseio.com",
-        projectId: "example-7a9ac",
-        storageBucket: "example-7a9ac.appspot.com",
-        messagingSenderId: "470545773345",
-        appId: "1:470545773345:web:9431f3d1192815dc1ec460"
-    };
-
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    const correctEmail = "admin@example.com";
-    const correctPassword = "password123";
-    let isAdmin = false;
-
-    // ฟังก์ชันเปิด modal ล็อกอิน
-    function openLoginModal() {
-        document.getElementById("loginModal").classList.add("show");
-        document.getElementById("email").value = '';
-        document.getElementById("password").value = '';
-    }
-
-    // ฟังก์ชันปิด modal ล็อกอิน
-    function closeLoginModal() {
-        document.getElementById("loginModal").classList.remove("show");
-    }
-
-    // ฟังก์ชันล็อกอิน
-    function login() {
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-
-        if (email === correctEmail && password === correctPassword) {
-            isAdmin = true;
-            closeLoginModal();
-            document.getElementById("adminToggleBtn").textContent = "ออกจากโหมดผู้ดูแล";
-            document.querySelector("table").classList.add("show-admin");
-        } else {
-            alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
-        }
-    }
-
-    // ฟังก์ชันเปิด/ปิดโหมดผู้ดูแล
-    function toggleAdminMode() {
-        if (isAdmin) {
-            isAdmin = false;
-            document.getElementById("adminToggleBtn").textContent = "เข้าสู่โหมดผู้ดูแล";
-            document.querySelector("table").classList.remove("show-admin");
-        } else {
-            openLoginModal();
-        }
-    }
-
-    // ฟังก์ชันอัพเดทสถานะห้อง
-    function updateStatus(button) {
-        const row = button.closest("tr");
-        const statusCell = row.querySelector(".status");
-        const currentStatus = statusCell.textContent;
-
-        const newStatus = currentStatus === "ว่าง" ? "ไม่ว่าง" : "ว่าง";
-        statusCell.textContent = newStatus;
-        statusCell.className = "status " + (newStatus === "ว่าง" ? "available" : "unavailable");
-
-        // บันทึกสถานะลง Firebase
-        const roomNumber = row.cells[0].textContent;
-        const price = row.cells[2].textContent;
-        set(ref(db, 'rooms/' + roomNumber), {
-            status: newStatus,
-            price: price
-        });
-    }
-
-    // ฟังก์ชันโหลดสถานะห้องจาก Firebase (ไม่บังคับ)
-    function loadRoomStatus() {
-        const roomRef = ref(db, 'rooms/');
-        onValue(roomRef, (snapshot) => {
-            const data = snapshot.val();
-            const roomStatusTable = document.getElementById("room-status");
-            roomStatusTable.innerHTML = '';
-
-            for (const roomNumber in data) {
-                const roomData = data[roomNumber];
-                const newRow = `
-                    <tr>
-                        <td>${roomNumber}</td>
-                        <td class="status ${roomData.status === "ว่าง" ? "available" : "unavailable"}">${roomData.status}</td>
-                        <td>${roomData.price}</td>
-                        <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
-                    </tr>
-                `;
-                roomStatusTable.innerHTML += newRow;
-            }
-        });
-    }
-
-    // เรียกใช้ loadRoomStatus เพื่อโหลดข้อมูลเมื่อหน้าเว็บโหลด
-    window.onload = loadRoomStatus;
-
-</script>
 
 </body>
 </html>
