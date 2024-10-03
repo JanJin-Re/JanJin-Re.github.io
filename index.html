@@ -77,6 +77,7 @@
         fetch('https://sheetdb.io/api/v1/abc123xyz') // ใส่ URL API ของคุณจาก SheetDB ที่นี่
             .then(response => response.json())
             .then(data => {
+                console.log(data); // ตรวจสอบข้อมูลในคอนโซล
                 const roomStatusTable = document.querySelector("#room-status");
                 roomStatusTable.innerHTML = ''; // ล้างตารางก่อนใส่ข้อมูลใหม่
                 data.forEach(room => {
