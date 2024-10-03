@@ -143,16 +143,12 @@
         #cancelBtn:hover {
             background-color: #b71c1c;
         }
-        .price-header {
-            display: flex;
-            flex-direction: column;
-        }
     </style>
     <!-- Firebase SDKs -->
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js";
-        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -238,24 +234,23 @@
                 roomData.push({ roomNumber, status, price });
             });
 
+            // บันทึกข้อมูลลง Firebase
             roomData.forEach(room => {
-                set(ref(db, 'rooms/' + room.roomNumber), {
-                    status: room.status,
-                    price: room.price
-                });
+                set(ref(db, 'rooms/' + room.roomNumber), { status: room.status, price: room.price });
             });
         }
 
         // ฟังก์ชันโหลดสถานะห้อง
         function loadRoomStatus() {
-            const roomRef = ref(db, 'rooms/');
-            onValue(roomRef, (snapshot) => {
-                const roomData = snapshot.val();
-                if (roomData) {
-                    Object.keys(roomData).forEach(roomNumber => {
-                        const room = roomData[roomNumber];
-                        const row = document.querySelector(`tr[data-room="${roomNumber}"]`);
-                        if (row) {
+            const roomsRef = ref(db, 'rooms/');
+            onValue(roomsRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    const rows = document.querySelectorAll("#room-status tr");
+                    rows.forEach(row => {
+                        const roomNumber = row.dataset.room;
+                        const room = data[roomNumber];
+                        if (room) {
                             const statusCell = row.querySelector('.status');
                             statusCell.textContent = room.status;
                             statusCell.className = room.status === 'ว่าง' ? 'status available' : 'status unavailable';
