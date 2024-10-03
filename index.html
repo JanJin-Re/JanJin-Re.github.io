@@ -254,10 +254,10 @@
             isAdmin = true;
             document.body.classList.add("show-admin");
             document.getElementById("adminToggleBtn").textContent = "ออกจากโหมดผู้ดูแล";
+            loadRoomStatus(); // โหลดสถานะห้องเมื่อเข้าสู่โหมดผู้ดูแล
             closeLoginModal();
-            loadRoomStatus(); // โหลดสถานะห้อง
         } else {
-            alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+            openLoginModal();
         }
     }
 
@@ -286,7 +286,6 @@
             statusCell.classList.remove('unavailable');
             statusCell.classList.add('available');
         }
-        saveRoomStatus(); // บันทึกสถานะหลังการอัพเดท
     }
 
     // ฟังก์ชันบันทึกสถานะห้อง
