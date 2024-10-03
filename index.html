@@ -149,6 +149,24 @@
         }
     </style>
 </head>
+    // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyB9huDa17wQnpKFhYP8iGC35ivwlP-m_oU",
+  authDomain: "example-7a9ac.firebaseapp.com",
+  databaseURL: "https://example-7a9ac-default-rtdb.firebaseio.com",
+  projectId: "example-7a9ac",
+  storageBucket: "example-7a9ac.appspot.com",
+  messagingSenderId: "470545773345",
+  appId: "1:470545773345:web:9431f3d1192815dc1ec460"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 <body>
 
 <h1>สถานะห้องพักและราคา</h1>
@@ -299,18 +317,20 @@
             const price = row.querySelector('td:nth-child(3)').textContent;
             roomData.push({ roomNumber, status, price });
         });
-        localStorage.setItem('roomStatus', JSON.stringify(roomData));
+// บันทึกข้อมูลลง Firebase
+    database.ref('rooms').set(roomData);
     }
 
     // ฟังก์ชันโหลดสถานะห้อง
     function loadRoomStatus() {
-        const roomData = JSON.parse(localStorage.getItem('roomStatus'));
+    database.ref('rooms').on('value', (snapshot) => {
+        const roomData = snapshot.val();
         if (roomData) {
             roomData.forEach((room, index) => {
                 const row = document.querySelectorAll("#room-status tr")[index];
                 const statusCell = row.querySelector('.status');
                 statusCell.textContent = room.status;
-                statusCell.className = `status ${room.status === 'ว่าง' ? 'available' : 'unavailable'}`;
+                statusCell.className = room.status === 'ว่าง' ? 'status available' : 'status unavailable';
                 row.querySelector('td:nth-child(3)').textContent = room.price; // กำหนดราคาให้ถูกต้อง
             });
         }
