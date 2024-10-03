@@ -143,11 +143,11 @@
         #cancelBtn:hover {
             background-color: #b71c1c;
         }
-        .price-header {
-            display: flex;
-            flex-direction: column;
-        }
     </style>
+
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-database.js"></script>
 </head>
 <body>
 
@@ -162,12 +162,7 @@
         <tr>
             <th>ห้อง</th>
             <th>สถานะ</th>
-            <th>
-                <div class="price-header">
-                    ราคา
-                    <span>(บาท/คืน)</span>
-                </div>
-            </th>
+            <th>ราคา (บาท/คืน)</th>
             <th class="admin-only">อัพเดทสถานะ</th>
         </tr>
     </thead>
@@ -229,6 +224,21 @@
 </div>
 
 <script>
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyB9huDa17wQnpKFhYP8iGC35ivwlP-m_oU",
+        authDomain: "example-7a9ac.firebaseapp.com",
+        databaseURL: "https://example-7a9ac-default-rtdb.firebaseio.com",
+        projectId: "example-7a9ac",
+        storageBucket: "example-7a9ac.appspot.com",
+        messagingSenderId: "470545773345",
+        appId: "1:470545773345:web:9431f3d1192815dc1ec460"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
     const correctEmail = "admin@example.com";
     const correctPassword = "password123";
     let isAdmin = false;
@@ -252,67 +262,70 @@
 
         if (email === correctEmail && password === correctPassword) {
             isAdmin = true;
-            document.body.classList.add("show-admin");
-            document.getElementById("adminToggleBtn").textContent = "ออกจากโหมดผู้ดูแล";
-            loadRoomStatus(); // โหลดสถานะห้องเมื่อเข้าสู่โหมดผู้ดูแล
             closeLoginModal();
+            document.getElementById("adminToggleBtn").textContent = "ออกจากโหมดผู้ดูแล";
+            document.querySelector("table").classList.add("show-admin");
         } else {
-            openLoginModal();
+            alert("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
         }
     }
 
     // ฟังก์ชันเปิด/ปิดโหมดผู้ดูแล
     function toggleAdminMode() {
         if (isAdmin) {
-            saveRoomStatus(); // บันทึกสถานะห้องก่อนออกจากโหมดผู้ดูแล
             isAdmin = false;
-            document.body.classList.remove("show-admin");
             document.getElementById("adminToggleBtn").textContent = "เข้าสู่โหมดผู้ดูแล";
+            document.querySelector("table").classList.remove("show-admin");
         } else {
             openLoginModal();
         }
     }
 
-    // ฟังก์ชันสำหรับอัพเดทสถานะห้อง
+    // ฟังก์ชันอัพเดทสถานะห้อง
     function updateStatus(button) {
-        const row = button.closest('tr');
-        const statusCell = row.querySelector('.status');
-        if (statusCell.classList.contains('available')) {
-            statusCell.textContent = 'ไม่ว่าง';
-            statusCell.classList.remove('available');
-            statusCell.classList.add('unavailable');
-        } else {
-            statusCell.textContent = 'ว่าง';
-            statusCell.classList.remove('unavailable');
-            statusCell.classList.add('available');
-        }
-    }
+        const row = button.closest("tr");
+        const statusCell = row.querySelector(".status");
+        const currentStatus = statusCell.textContent;
 
-    // ฟังก์ชันบันทึกสถานะห้อง
-    function saveRoomStatus() {
-        const roomData = [];
-        const rows = document.querySelectorAll("#room-status tr");
-        rows.forEach(row => {
-            const roomNumber = row.querySelector('td:first-child').textContent;
-            const status = row.querySelector('.status').textContent;
-            const price = row.querySelector('td:nth-child(3)').textContent;
-            roomData.push({ roomNumber, status, price });
+        const newStatus = currentStatus === "ว่าง" ? "ไม่ว่าง" : "ว่าง";
+        statusCell.textContent = newStatus;
+        statusCell.className = "status " + (newStatus === "ว่าง" ? "available" : "unavailable");
+
+        // บันทึกสถานะลง Firebase
+        const roomNumber = row.cells[0].textContent;
+        const price = row.cells[2].textContent;
+        set(ref(db, 'rooms/' + roomNumber), {
+            status: newStatus,
+            price: price
         });
-        localStorage.setItem('roomStatus', JSON.stringify(roomData));
     }
 
-    // ฟังก์ชันโหลดสถานะห้อง
+    // ฟังก์ชันโหลดสถานะห้องจาก Firebase (ไม่บังคับ)
     function loadRoomStatus() {
-        const roomData = JSON.parse(localStorage.getItem('roomStatus'));
-        if (roomData) {
-            roomData.forEach((room, index) => {
-                const row = document.querySelectorAll("#room-status tr")[index];
-                const statusCell = row.querySelector('.status');
-                statusCell.textContent = room.status;
-                statusCell.className = `status ${room.status === 'ว่าง' ? 'available' : 'unavailable'}`;
-            });
-        }
+        const roomRef = ref(db, 'rooms/');
+        onValue(roomRef, (snapshot) => {
+            const data = snapshot.val();
+            const roomStatusTable = document.getElementById("room-status");
+            roomStatusTable.innerHTML = '';
+
+            for (const roomNumber in data) {
+                const roomData = data[roomNumber];
+                const newRow = `
+                    <tr>
+                        <td>${roomNumber}</td>
+                        <td class="status ${roomData.status === "ว่าง" ? "available" : "unavailable"}">${roomData.status}</td>
+                        <td>${roomData.price}</td>
+                        <td class="admin-only"><button onclick="updateStatus(this)">อัพเดท</button></td>
+                    </tr>
+                `;
+                roomStatusTable.innerHTML += newRow;
+            }
+        });
     }
+
+    // เรียกใช้ loadRoomStatus เพื่อโหลดข้อมูลเมื่อหน้าเว็บโหลด
+    window.onload = loadRoomStatus;
+
 </script>
 
 </body>
